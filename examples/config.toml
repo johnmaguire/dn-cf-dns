@@ -1,8 +1,8 @@
 # required_tags is a list of tags that must be present on the host
-# for it to be considered for DNS registration
-required_tags = ["public-dns:yes"]
+# for it to be considered for DNS registration. Optional.
+required_tags = ["publish:yes"]
 # required_suffix will only register hosts with this domain (must match the
-# full domain suffix)
+# full domain suffix.) Optional.
 required_suffix = ""
 # trim_suffix will remove the domain from the hostname (e.g. host.example.com
 # will become host)
@@ -16,11 +16,12 @@ append_suffix = "nebula.example.com"
 prune_records = true
 
 [cloudflare]
-# api_token is the Cloudflare API token
+# api_token is the Cloudflare API token. It needs the `Zone:DNS:Edit`
+# permission for the zone specified in zone_name.
 api_token = ""
-# zone_id is the DNS zone ID to create records in
-zone_id = ""
+# zone_name is the DNS zone (domain) to create records in (e.g. example.com)
+zone_name = ""
 
 [definednet]
-# api_token is the Defined.net API token
+# api_token is the Defined.net API token. It needs the `hosts:list` permission.
 api_token = ""

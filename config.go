@@ -27,12 +27,12 @@ type AppConfig struct {
 	Cloudflare CloudflareConfig `toml:"cloudflare"`
 
 	// Defined is the configuration for the Defined Networking API.
-	DefinedNet DefinedConfig `toml:"defined"`
+	DefinedNet DefinedConfig `toml:"definednet"`
 }
 
 type CloudflareConfig struct {
 	APIToken string `toml:"api_token"`
-	ZoneID   string `toml:"zone_id"`
+	ZoneName string `toml:"zone_name"`
 }
 
 type DefinedConfig struct {
@@ -40,11 +40,20 @@ type DefinedConfig struct {
 }
 
 func LoadConfig(path string) (*AppConfig, error) {
+	// Load config from file
 	config, err := newConfigFromFile(path)
 	if err != nil {
 		return nil, err
 	}
+
+	// Optionally load secrets from the environment
 	config.readEnv()
+
+	// Default AppendSuffix to the zone name
+	if config.AppendSuffix == "" {
+		config.AppendSuffix = config.Cloudflare.ZoneName
+	}
+
 	return config, nil
 }
 

@@ -15,13 +15,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cloudflare/cloudflare-go"
+	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 )
 
 func main() {
 	if err := mainWithErr(); err != nil {
-		fmt.Printf("Error: %s\n", err)
-		os.Exit(1)
+		log.Fatal().Err(err).Send()
 	}
 }
 
@@ -40,15 +41,33 @@ func mainWithErr() error {
 			// Read the config file
 			cfg, err := LoadConfig(c.String("config"))
 			if err != nil {
+				return fmt.Errorf("failed to load config: %w", err)
+			}
+
+			cf, err := cloudflare.NewWithAPIToken(cfg.Cloudflare.APIToken)
+			if err != nil {
 				return err
 			}
 
-			fmt.Printf("%#v\n", cfg)
+			// Find the Cloudflare zone ID for the zone we're interested in
+			zoneID, err := GetZoneID(cf, cfg.Cloudflare.ZoneName)
+			if err != nil {
+				return fmt.Errorf("failed to get zone ID: %w", err)
+			}
+
+			log.Info().Str("zoneID", zoneID).Msgf("Found Cloudflare zone ID for %s", cfg.Cloudflare.ZoneName)
 
 			// Filter the DN hosts based on the following criteria:
 			// - Presence of a specific tag (e.g. "public-dns:yes")
 			// - Hostname contains a specific suffix (e.g. ".example.com")
+			log.Info().
+				Str("requiredSuffix", cfg.RequiredSuffix).
+				Str("requiredTags", strings.Join(cfg.RequiredTags, ",")).
+				Msg("Collecting eligible Defined.net Managed Nebula hosts")
+
 			hosts, err := FilterHosts(cfg.DefinedNet.APIToken, func(h Host) bool {
+				// FIXME check valid fqdn
+
 				// Make sure any required suffix is present
 				if !strings.HasSuffix(h.Hostname, cfg.RequiredSuffix) {
 					return false
@@ -69,22 +88,30 @@ func mainWithErr() error {
 				return true
 			})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to collect eligible hosts: %w", err)
 			}
+
+			log.Info().Int("eligibleHosts", len(hosts)).Msgf("Found %d eligible hosts", len(hosts))
 
 			// Create an A record for each host that matches the criteria pointing to
 			// the host's IP address. Create a map of valid hostnames as we go.
 			hostnames := map[string]struct{}{}
 			for _, host := range hosts {
 				hostname := host.Hostname
+				l := log.Info().Str("initialHostname", hostname)
 				if cfg.TrimSuffix {
 					hostname = trimSuffix(hostname)
+					l = l.Str("trimmedHostname", hostname)
 				}
+				hostname = strings.ToLower(hostname + "." + cfg.AppendSuffix)
+				l.Str("finalHostname", hostname).
+					Str("ipAddress", host.IPAddress).
+					Msg("Creating Cloudflare DNS record")
 
-				err := CreateRecord(cfg.Cloudflare.APIToken, cfg.Cloudflare.ZoneID, hostname, host.IPAddress)
+				err := CreateRecord(cf, zoneID, hostname, host.IPAddress)
 				if err != nil {
 					// TODO: Log the error and continue
-					return err
+					return fmt.Errorf("failed to create record: %w", err)
 				}
 
 				hostnames[hostname] = struct{}{}
@@ -93,15 +120,29 @@ func mainWithErr() error {
 			// For any hosts within the target zone that do not have a corresponding
 			// host in Defined Networking, delete the A record
 			if cfg.PruneRecords {
-				err := IterateRecords(cfg.Cloudflare.APIToken, cfg.Cloudflare.ZoneID, func(r Record) error {
+				log.Info().Str("zoneID", zoneID).
+					Msg("Pruning Cloudflare DNS records")
+
+				err := IterateRecords(cf, zoneID, func(r Record) error {
+					if !strings.HasSuffix(r.Name, cfg.AppendSuffix) {
+						return nil
+					}
+
 					if _, ok := hostnames[r.Name]; !ok {
-						return DeleteRecord(cfg.Cloudflare.APIToken, cfg.Cloudflare.ZoneID, r.ID)
+						log.Info().Str("recordID", r.ID).
+							Str("recordName", r.Name).
+							Msg("Pruning stale DNS record")
+
+						err := DeleteRecord(cf, zoneID, r.ID)
+						if err != nil {
+							return fmt.Errorf("failed to delete record: %w", err)
+						}
 					}
 
 					return nil
 				})
 				if err != nil {
-					return err
+					return fmt.Errorf("error during host prune iteration: %w", err)
 				}
 			}
 
