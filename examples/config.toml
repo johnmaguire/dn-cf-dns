@@ -1,0 +1,26 @@
+# required_tags is a list of tags that must be present on the host
+# for it to be considered for DNS registration
+required_tags = ["public-dns:yes"]
+# required_suffix will only register hosts with this domain (must match the
+# full domain suffix)
+required_suffix = ""
+# trim_suffix will remove the domain from the hostname (e.g. host.example.com
+# will become host)
+trim_suffix = true
+# append_suffix will append the domain to the hostname (e.g. host will become
+# host.example.com.) This step occurs after trim_suffix, so you can convert
+# host.example.com to host.nebula.example.com, for example.
+append_suffix = "nebula.example.com"
+# prune_records will remove any records in the DNS zone that do not correspond
+# to a host in the Nebula network.
+prune_records = true
+
+[cloudflare]
+# api_token is the Cloudflare API token
+api_token = ""
+# zone_id is the DNS zone ID to create records in
+zone_id = ""
+
+[definednet]
+# api_token is the Defined.net API token
+api_token = ""

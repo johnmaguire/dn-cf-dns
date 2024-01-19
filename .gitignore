@@ -1,0 +1,5 @@
+# Build artifact
+/dn-cf-dns
+
+# Local development
+/config.toml
