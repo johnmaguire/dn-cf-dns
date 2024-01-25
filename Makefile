@@ -7,8 +7,12 @@ dev: bin
 fmt:
 	goimports -w .
 
+
 test:
-	go test ./...
+	go test $(TEST_FLAGS) $(shell go list ./...)
+
+testv: TEST_FLAGS += -v
+testv: test
 
 vet:
 	go vet ./...
