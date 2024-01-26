@@ -7,7 +7,6 @@ dev: bin
 fmt:
 	goimports -w .
 
-
 test:
 	go test $(TEST_FLAGS) $(shell go list ./...)
 

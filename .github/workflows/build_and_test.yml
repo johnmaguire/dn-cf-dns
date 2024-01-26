@@ -17,4 +17,4 @@ jobs:
         run: make bin
 
       - name: Run tests
-        run: make testv
+        run: TEST_FLAGS="-race" make testv
