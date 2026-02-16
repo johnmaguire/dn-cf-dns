@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release-assets:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux]
+        goarch: [amd64, arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21.x'
+
+      - name: Build release binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME:-dev}"
+          mkdir -p dist
+          BIN_NAME="dn-cf-dns_${VERSION}_${GOOS}_${GOARCH}"
+          go build -trimpath -ldflags "-s -w" -o "dist/${BIN_NAME}" .
+          tar -C dist -czf "dist/${BIN_NAME}.tar.gz" "${BIN_NAME}"
+          sha256sum "dist/${BIN_NAME}.tar.gz" > "dist/${BIN_NAME}.tar.gz.sha256"
+          rm -f "dist/${BIN_NAME}"
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.sha256
+          generate_release_notes: true
