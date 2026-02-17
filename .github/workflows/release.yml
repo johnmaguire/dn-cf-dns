@@ -22,6 +22,14 @@ jobs:
       - name: Build release binary
         run: make release
 
+      - name: Create tarballs
+        run: |
+          cd dist
+          for platform_dir in */; do
+            platform="${platform_dir%/}"
+            tar -czf "dn-cf-dns-${platform}.tar.gz" -C "${platform_dir}" dn-cf-dns
+          done
+
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
