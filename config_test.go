@@ -11,8 +11,7 @@ required_tags = ["publish:yes"]
 required_suffix = ".example.com"
 trim_suffix = true
 append_suffix = "nebula.example.com"
-prune_records = true
-prune_network_records_only = true
+prune = "network"
 
 [cloudflare]
 api_token = "cf-token"
@@ -58,11 +57,8 @@ func TestLoadConfig_FromFile(t *testing.T) {
 	if !cfg.TrimSuffix {
 		t.Error("TrimSuffix = false, want true")
 	}
-	if !cfg.PruneRecords {
-		t.Error("PruneRecords = false, want true")
-	}
-	if !cfg.PruneNetworkRecordsOnly {
-		t.Error("PruneNetworkRecordsOnly = false, want true")
+	if cfg.Prune != "network" {
+		t.Errorf("Prune = %q, want %q", cfg.Prune, "network")
 	}
 	if cfg.RequiredSuffix != ".example.com" {
 		t.Errorf("RequiredSuffix = %q, want %q", cfg.RequiredSuffix, ".example.com")

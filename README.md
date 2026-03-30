@@ -28,5 +28,4 @@ All configuration can be provided via environment variables, making the config f
 | `NEBULA_DNS_REQUIRED_SUFFIX` | Only register hosts with this hostname suffix |
 | `NEBULA_DNS_TRIM_SUFFIX` | Trim domain from DN hostname (`true`/`false`) |
 | `NEBULA_DNS_APPEND_SUFFIX` | Suffix to append to hostname (defaults to zone name) |
-| `NEBULA_DNS_PRUNE_RECORDS` | Delete stale DNS records (`true`/`false`) |
-| `NEBULA_DNS_PRUNE_NETWORK_RECORDS_ONLY` | Only prune records within the network CIDR (`true`/`false`) |
+| `NEBULA_DNS_PRUNE` | Prune mode: `none` (default), `all`, or `network` |

@@ -23,12 +23,11 @@ type AppConfig struct {
 	// creating the DNS record (occurs after TrimSuffix.)
 	AppendSuffix string `toml:"append_suffix" envconfig:"NEBULA_DNS_APPEND_SUFFIX"`
 
-	// PruneRecords indicates whether to delete Cloudflare DNS records that
-	// weren't created this run.
-	PruneRecords bool `toml:"prune_records" envconfig:"NEBULA_DNS_PRUNE_RECORDS"`
-	// PruneNetworkRecordsOnly indicates whether to only delete records that
-	// match the network CIDR from Defined Networking.
-	PruneNetworkRecordsOnly bool `toml:"prune_network_records_only" envconfig:"NEBULA_DNS_PRUNE_NETWORK_RECORDS_ONLY"`
+	// Prune controls whether and how stale Cloudflare DNS records are deleted.
+	// Valid values: "none" (default), "all", "network".
+	// "all" deletes any record under AppendSuffix without a matching DN host.
+	// "network" only deletes A records whose IP falls within the DN network CIDR.
+	Prune string `toml:"prune" envconfig:"NEBULA_DNS_PRUNE"`
 
 	// Cloudflare is the configuration for the Cloudflare API.
 	Cloudflare CloudflareConfig `toml:"cloudflare"`
@@ -91,6 +90,11 @@ func (c *AppConfig) validate() error {
 	}
 	if len(missing) > 0 {
 		return fmt.Errorf("missing required config fields: %s", strings.Join(missing, ", "))
+	}
+	switch c.Prune {
+	case "", "none", "all", "network":
+	default:
+		return fmt.Errorf("invalid prune value %q: must be \"none\", \"all\", or \"network\"", c.Prune)
 	}
 	return nil
 }

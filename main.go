@@ -143,8 +143,8 @@ func mainWithErr() error {
 
 			// For any hosts within the target zone that do not have a corresponding
 			// host in Defined Networking, delete the A record
-			if cfg.PruneRecords {
-				log.Info().Str("zoneID", zoneID).
+			if cfg.Prune == "all" || cfg.Prune == "network" {
+				log.Info().Str("zoneID", zoneID).Str("mode", cfg.Prune).
 					Msg("Pruning Cloudflare DNS records")
 
 				err := IterateRecords(cf, zoneID, func(r Record) error {
@@ -153,9 +153,8 @@ func mainWithErr() error {
 					}
 
 					if _, ok := hostnames[r.Name]; !ok {
-
-						// Ignore any records which aren't pointing to the Nebula network
-						if cfg.PruneNetworkRecordsOnly {
+						// In network mode, only prune A records within the Nebula CIDR
+						if cfg.Prune == "network" {
 							if r.Type != "A" {
 								return nil
 							}
