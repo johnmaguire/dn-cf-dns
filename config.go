@@ -17,11 +17,26 @@ const (
 )
 
 type AppConfig struct {
-	RequiredTags   []string `toml:"required_tags"`
-	RequiredSuffix string   `toml:"required_suffix"`
-	TrimSuffix     bool     `toml:"trim_suffix"`
-	AppendSuffix   string   `toml:"append_suffix"`
-	PruneRecords   bool     `toml:"prune_records"`
+	// RequiredTags is the list of tags that must be present on a DN host in
+	// the network in order for a DNS record to be created for it.
+	RequiredTags []string `toml:"required_tags"`
+	// RequiredSuffix is the suffix that must be present in the DN hostname in
+	// order for a DNS record to be created for it.
+	RequiredSuffix string `toml:"required_suffix"`
+
+	// TrimSuffix determines whether to trim everything after the first . in
+	// the DN hostname before creating the DNS record.
+	TrimSuffix bool `toml:"trim_suffix"`
+	// AppendSuffix is the suffix to append to the hostname from DN before
+	// creating the DNS record (occurs after TrimSuffix.)
+	AppendSuffix string `toml:"append_suffix"`
+
+	// PruneRecords indicates whether to delete Cloudflare DNS records that
+	// weren't created this run.
+	PruneRecords bool `toml:"prune_records"`
+	// PruneNetworkRecordsOnly indicates whether to only delete records that
+	// match the network CIDR from Defined Networking.
+	PruneNetworkRecordsOnly bool `toml:"prune_network_records_only"`
 
 	// Cloudflare is the configuration for the Cloudflare API.
 	Cloudflare CloudflareConfig `toml:"cloudflare"`
@@ -32,11 +47,15 @@ type AppConfig struct {
 
 type CloudflareConfig struct {
 	APIToken string `toml:"api_token"`
+	// ZoneName is the name of the Cloudflare zone to manage DNS records in.
 	ZoneName string `toml:"zone_name"`
 }
 
 type DefinedConfig struct {
 	APIToken string `toml:"api_token"`
+	// NetworkID is the ID of the network in Defined Networking to monitor for
+	// hosts.
+	NetworkID string `toml:"network_id"`
 }
 
 func LoadConfig(path string) (*AppConfig, error) {

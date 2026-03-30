@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/netip"
 	"net/url"
 )
 
@@ -23,6 +24,56 @@ type hostsResponse struct {
 	} `json:"metadata"`
 }
 
+func dnRequest(dnToken string, method string, path string, query url.Values) (*http.Response, error) {
+	url := fmt.Sprintf("https://api.defined.net%s?%s", path, query.Encode())
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Bearer "+dnToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("unexpected status code: %d, failed to read body: %w", resp.StatusCode, err)
+		}
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
+	}
+
+	return resp, nil
+}
+
+func GetNetworkCIDR(dnToken string, networkID string) (netip.Prefix, error) {
+	resp, err := dnRequest(dnToken, "GET", fmt.Sprintf("/v1/networks/%s", networkID), nil)
+	if err != nil {
+		return netip.Prefix{}, err
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return netip.Prefix{}, err
+	}
+
+	var res struct {
+		Data struct {
+			CIDR string `json:"cidr"`
+		} `json:"data"`
+	}
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		return netip.Prefix{}, err
+	}
+
+	return netip.ParsePrefix(res.Data.CIDR)
+}
+
 func FilterHosts(dnToken string, filterFunc func(Host) bool) ([]Host, error) {
 	hosts := []Host{}
 
@@ -34,27 +85,14 @@ func FilterHosts(dnToken string, filterFunc func(Host) bool) ([]Host, error) {
 			"pageSize": []string{"500"},
 		}
 
-		req, err := http.NewRequest("GET", "https://api.defined.net/v1/hosts?"+params.Encode(), nil)
+		resp, err := dnRequest(dnToken, "GET", "/v1/hosts", params)
 		if err != nil {
 			return nil, err
 		}
-
-		req.Header.Set("Accept", "application/json")
-		req.Header.Set("Authorization", "Bearer "+dnToken)
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
 		}
 
 		// Decode the response body into a slice of Hosts

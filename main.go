@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"net/mail"
+	"net/netip"
 	"os"
 	"strings"
 
@@ -54,8 +55,14 @@ func mainWithErr() error {
 			if err != nil {
 				return fmt.Errorf("failed to get zone ID: %w", err)
 			}
-
 			log.Info().Str("zoneID", zoneID).Msgf("Found Cloudflare zone ID for %s", cfg.Cloudflare.ZoneName)
+
+			// Get the network CIDR for the network we're interested in
+			cidr, err := GetNetworkCIDR(cfg.DefinedNet.APIToken, cfg.DefinedNet.NetworkID)
+			if err != nil {
+				return fmt.Errorf("failed to get network CIDR: %w", err)
+			}
+			log.Info().Str("networkCIDR", cidr.String()).Msgf("Found network CIDR for network %s", cfg.DefinedNet.NetworkID)
 
 			// Filter the DN hosts based on the following criteria:
 			// - Presence of a specific tag (e.g. "public-dns:yes")
@@ -129,6 +136,22 @@ func mainWithErr() error {
 					}
 
 					if _, ok := hostnames[r.Name]; !ok {
+
+						// Ignore any records which aren't pointing to the Nebula network
+						if cfg.PruneNetworkRecordsOnly {
+							if r.Type != "A" {
+								return nil
+							}
+
+							ip, err := netip.ParseAddr(r.Content)
+							if err != nil {
+								return fmt.Errorf("failed to parse IP address from record content: %w", err)
+							}
+							if !cidr.Contains(ip) {
+								return nil
+							}
+						}
+
 						log.Info().Str("recordID", r.ID).
 							Str("recordName", r.Name).
 							Msg("Pruning stale DNS record")

@@ -8,8 +8,10 @@ import (
 )
 
 type Record struct {
-	ID   string
-	Name string
+	ID      string
+	Name    string
+	Type    string
+	Content string
 }
 
 func GetZoneID(cf *cloudflare.API, zoneName string) (string, error) {
@@ -34,7 +36,7 @@ func IterateRecords(cf *cloudflare.API, zoneID string, fn func(record Record) er
 	}
 
 	for _, r := range recs {
-		r := Record{ID: r.ID, Name: r.Name}
+		r := Record{ID: r.ID, Name: r.Name, Type: r.Type, Content: r.Content}
 		if err := fn(r); err != nil {
 			// TODO better error handling
 			return fmt.Errorf("error in callback for record %+v: %w", r, err)

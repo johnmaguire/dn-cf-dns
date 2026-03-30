@@ -14,6 +14,13 @@ append_suffix = "nebula.example.com"
 # prune_records will remove any records in the DNS zone that do not correspond
 # to a host in the Nebula network.
 prune_records = true
+# prune_network_records_only will only remove records that correspond to hosts
+# in the Nebula network. If false, it will remove any record that does not
+# match a host in the Nebula network, even if it is not a record that would be
+# created by this program. This is useful if you have other records in the zone
+# that you want to keep, but it can be dangerous if you have records that are
+# not managed by this program and you set it to false.
+prune_network_records_only = true
 
 [cloudflare]
 # api_token is the Cloudflare API token. It needs the `Zone:DNS:Edit`
@@ -25,3 +32,5 @@ zone_name = ""
 [definednet]
 # api_token is the Defined.net API token. It needs the `hosts:list` permission.
 api_token = ""
+# network_id is the ID of the Defined.net network to get hosts from
+network_id = ""
