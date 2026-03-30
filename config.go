@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/BurntSushi/toml"
 	"github.com/johnmaguire/nebula-dns/internal/envconfig"
 )
@@ -48,7 +51,7 @@ type DefinedConfig struct {
 }
 
 func LoadConfig(path string) (*AppConfig, error) {
-	// Load config from file
+	// Load config from file if it exists
 	config, err := newConfigFromFile(path)
 	if err != nil {
 		return nil, err
@@ -56,6 +59,11 @@ func LoadConfig(path string) (*AppConfig, error) {
 
 	// Overlay environment variables onto config
 	if err := envconfig.Process(config); err != nil {
+		return nil, err
+	}
+
+	// Validate required fields
+	if err := config.validate(); err != nil {
 		return nil, err
 	}
 
@@ -67,8 +75,31 @@ func LoadConfig(path string) (*AppConfig, error) {
 	return config, nil
 }
 
+func (c *AppConfig) validate() error {
+	var missing []string
+	if c.Cloudflare.APIToken == "" {
+		missing = append(missing, "cloudflare.api_token")
+	}
+	if c.Cloudflare.ZoneName == "" {
+		missing = append(missing, "cloudflare.zone_name")
+	}
+	if c.DefinedNet.APIToken == "" {
+		missing = append(missing, "definednet.api_token")
+	}
+	if c.DefinedNet.NetworkID == "" {
+		missing = append(missing, "definednet.network_id")
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("missing required config fields: %s", strings.Join(missing, ", "))
+	}
+	return nil
+}
+
 func newConfigFromFile(path string) (*AppConfig, error) {
 	var config AppConfig
+	if path == "" {
+		return &config, nil
+	}
 	if _, err := toml.DecodeFile(path, &config); err != nil {
 		return nil, err
 	}

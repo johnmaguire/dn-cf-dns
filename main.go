@@ -53,7 +53,7 @@ func mainWithErr() error {
 			&mail.Address{Name: "John Maguire", Address: "contact@johnmaguire.me"},
 		},
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "config", Value: "./config.toml", Usage: "path to config file"},
+			&cli.StringFlag{Name: "config", Usage: "path to config file"},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
 			// Read the config file
