@@ -34,12 +34,17 @@ All configuration can be provided via environment variables, making the config f
 
 Docker images are published to `ghcr.io/johnmaguire/dn-cf-dns` on each tagged release. Images are available for `linux/amd64` and `linux/arm64`.
 
+The container runs `nebula-dns` once immediately on startup, then starts a cron job to run it on a schedule. By default the schedule is every 5 minutes. Set the `NEBULA_DNS_SCHEDULE` environment variable to a cron expression to customize this.
+
+If the initial run fails (e.g. due to missing configuration), the container will exit immediately.
+
 Example `compose.yml`:
 
 ```yaml
 services:
   nebula-dns:
     image: ghcr.io/johnmaguire/dn-cf-dns:latest
+    restart: unless-stopped
     environment:
       - NEBULA_DNS_CF_API_TOKEN=your-cloudflare-token
       - NEBULA_DNS_CF_ZONE_NAME=example.com
@@ -48,4 +53,5 @@ services:
       - NEBULA_DNS_REQUIRED_TAGS=publish:yes
       - NEBULA_DNS_TRIM_SUFFIX=true
       - NEBULA_DNS_PRUNE=network
+      - NEBULA_DNS_SCHEDULE=*/5 * * * *
 ```

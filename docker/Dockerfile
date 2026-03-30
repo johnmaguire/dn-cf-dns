@@ -16,5 +16,6 @@ FROM alpine:3
 RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /nebula-dns /usr/local/bin/nebula-dns
+COPY docker/entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT ["nebula-dns"]
+ENTRYPOINT ["/entrypoint.sh"]
