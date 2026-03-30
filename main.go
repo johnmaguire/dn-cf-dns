@@ -14,12 +14,29 @@ import (
 	"net/mail"
 	"net/netip"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/cloudflare/cloudflare-go"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 )
+
+// version can be set at build time via -ldflags "-X main.version=1.2.3".
+// If not set, it falls back to the module version from Go's embedded build info
+// (populated by go install module@version).
+var version = ""
+
+func init() {
+	if version != "" {
+		return
+	}
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" {
+		version = info.Main.Version
+	} else {
+		version = "dev"
+	}
+}
 
 func main() {
 	if err := mainWithErr(); err != nil {
@@ -30,7 +47,7 @@ func main() {
 func mainWithErr() error {
 	cmd := &cli.Command{
 		Name:        "dn-cf-dns",
-		Version:     "0.1.0",
+		Version:     version,
 		Description: "dn-cf-dns manages DNS records in Cloudflare based on Defined Networking hosts",
 		Authors: []any{
 			&mail.Address{Name: "John Maguire", Address: "contact@johnmaguire.me"},

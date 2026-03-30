@@ -1,4 +1,5 @@
-BUILD_FLAGS += -trimpath
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+BUILD_FLAGS += -trimpath -ldflags "-X main.version=$(VERSION)"
 
 ALL_LINUX = linux-amd64 \
 			linux-arm64
