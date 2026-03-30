@@ -27,7 +27,7 @@ jobs:
           cd dist
           for platform_dir in */; do
             platform="${platform_dir%/}"
-            tar -czf "dn-cf-dns-${platform}.tar.gz" -C "${platform_dir}" dn-cf-dns
+            tar -czf "nebula-dns-${platform}.tar.gz" -C "${platform_dir}" nebula-dns
           done
 
       - name: Upload release assets

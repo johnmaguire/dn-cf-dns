@@ -5,14 +5,14 @@ ALL_LINUX = linux-amd64 \
 			linux-arm64
 
 bin:
-	go build $(BUILD_FLAGS) -o ./dn-cf-dns .
+	go build $(BUILD_FLAGS) -o ./nebula-dns .
 
-dist/%/dn-cf-dns:
+dist/%/nebula-dns:
 	GOOS=$(firstword $(subst -, , $*)) \
 		GOARCH=$(word 2, $(subst -, ,$*)) $(GOENV) \
 		go build $(BUILD_FLAGS) -o $@ .
 
-release: $(ALL_LINUX:%=dist/%/dn-cf-dns)
+release: $(ALL_LINUX:%=dist/%/nebula-dns)
 
 clean:
 	rm -r dist

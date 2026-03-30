@@ -1,4 +1,4 @@
-module github.com/johnmaguire/dn-cf-dns
+module github.com/johnmaguire/nebula-dns
 
 go 1.25.1
 

@@ -1,5 +1,5 @@
 # Build artifact
-/dn-cf-dns
+/nebula-dns
 /dist/
 
 # Local development

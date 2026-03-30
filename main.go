@@ -1,4 +1,4 @@
-// dn-cf-dns is a tool for creating DNS records in Cloudflare based on hosts
+// nebula-dns is a tool for creating DNS records in Cloudflare based on hosts
 // that exist in Defined Networking.
 //
 // This tool is expected to be run as a one-shot job periodically (e.g. once
@@ -46,9 +46,9 @@ func main() {
 
 func mainWithErr() error {
 	cmd := &cli.Command{
-		Name:        "dn-cf-dns",
+		Name:        "nebula-dns",
 		Version:     version,
-		Description: "dn-cf-dns manages DNS records in Cloudflare based on Defined Networking hosts",
+		Description: "nebula-dns manages DNS records in Cloudflare based on Defined Networking hosts",
 		Authors: []any{
 			&mail.Address{Name: "John Maguire", Address: "contact@johnmaguire.me"},
 		},
