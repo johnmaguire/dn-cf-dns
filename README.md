@@ -29,3 +29,23 @@ All configuration can be provided via environment variables, making the config f
 | `NEBULA_DNS_TRIM_SUFFIX` | Trim domain from DN hostname (`true`/`false`) |
 | `NEBULA_DNS_APPEND_SUFFIX` | Suffix to append to hostname (defaults to zone name) |
 | `NEBULA_DNS_PRUNE` | Prune mode: `none` (default), `all`, or `network` |
+
+### Docker
+
+Docker images are published to `ghcr.io/johnmaguire/dn-cf-dns` on each tagged release. Images are available for `linux/amd64` and `linux/arm64`.
+
+Example `compose.yml`:
+
+```yaml
+services:
+  nebula-dns:
+    image: ghcr.io/johnmaguire/dn-cf-dns:latest
+    environment:
+      - NEBULA_DNS_CF_API_TOKEN=your-cloudflare-token
+      - NEBULA_DNS_CF_ZONE_NAME=example.com
+      - NEBULA_DNS_DN_API_TOKEN=your-dn-token
+      - NEBULA_DNS_DN_NETWORK_ID=your-network-id
+      - NEBULA_DNS_REQUIRED_TAGS=publish:yes
+      - NEBULA_DNS_TRIM_SUFFIX=true
+      - NEBULA_DNS_PRUNE=network
+```
